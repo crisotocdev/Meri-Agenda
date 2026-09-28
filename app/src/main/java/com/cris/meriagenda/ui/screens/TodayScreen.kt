@@ -22,42 +22,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cris.meriagenda.data.model.Task
-
-data class ExampleTask(
-    val title: String,
-    val category: String,
-    val important: Boolean = false
-)
+import com.cris.meriagenda.data.model.TaskCategory
+import com.cris.meriagenda.data.model.TaskPriority
+import java.time.format.DateTimeFormatter
 
 @Composable
-fun TodayScreen(tasks: List<Task>,
-                onAddTaskClick: () -> Unit,
-                onTaskChecked: (Task, Boolean) -> Unit) {
-
-    val tasks = listOf(
-        ExampleTask(
-            title = "Preparar ficha de Matemática",
-            category = "Colegio"
-        ),
-        ExampleTask(
-            title = "Revisar cuadernos",
-            category = "Colegio"
-        ),
-        ExampleTask(
-            title = "Leer material para la clase",
-            category = "Universidad"
-        ),
-        ExampleTask(
-            title = "Entregar avance de investigación",
-            category = "Universidad",
-            important = true
-        )
-    )
+fun TodayScreen(
+    tasks: List<Task>,
+    onAddTaskClick: () -> Unit,
+    onTaskChecked: (Task, Boolean) -> Unit
+) {
 
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = { }
+                onClick = onAddTaskClick
             ) {
                 Text("＋ Nueva tarea")
             }
@@ -100,8 +79,31 @@ fun TodayScreen(tasks: List<Task>,
                 )
             }
 
-            items(tasks) { task ->
-                TaskCard(task)
+            if (tasks.isEmpty()) {
+
+                item {
+                    Text(
+                        text = "No tienes tareas pendientes para hoy 🎉",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+
+            } else {
+
+                items(
+                    items = tasks,
+                ) { task ->
+
+                    TaskCard(
+                        task = task,
+                        onCheckedChange = { checked ->
+                            onTaskChecked(
+                                task,
+                                checked
+                            )
+                        }
+                    )
+                }
             }
 
             item {
@@ -114,7 +116,13 @@ fun TodayScreen(tasks: List<Task>,
 }
 
 @Composable
-fun TaskCard(task: ExampleTask) {
+fun TaskCard(
+    task: Task,
+    onCheckedChange: (Boolean) -> Unit
+) {
+
+    val timeFormatter =
+        DateTimeFormatter.ofPattern("HH:mm")
 
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -128,8 +136,8 @@ fun TaskCard(task: ExampleTask) {
         ) {
 
             Checkbox(
-                checked = false,
-                onCheckedChange = { }
+                checked = task.isCompleted,
+                onCheckedChange = onCheckedChange
             )
 
             Column(
@@ -137,10 +145,13 @@ fun TaskCard(task: ExampleTask) {
             ) {
 
                 Text(
-                    text = if (task.category == "Colegio") {
-                        "🏫 ${task.category}"
-                    } else {
-                        "🎓 ${task.category}"
+                    text = when (task.category) {
+
+                        TaskCategory.COLEGIO ->
+                            "🏫 Colegio"
+
+                        TaskCategory.UNIVERSIDAD ->
+                            "🎓 Universidad"
                     },
                     style = MaterialTheme.typography.labelMedium
                 )
@@ -151,11 +162,31 @@ fun TaskCard(task: ExampleTask) {
                     fontWeight = FontWeight.Medium
                 )
 
-                if (task.important) {
+                task.dueTime?.let { time ->
+
                     Text(
-                        text = "⚠ Importante",
+                        text = "🕐 ${time.format(timeFormatter)}",
                         style = MaterialTheme.typography.labelMedium
                     )
+                }
+
+                when (task.priority) {
+
+                    TaskPriority.NORMAL -> Unit
+
+                    TaskPriority.IMPORTANTE -> {
+                        Text(
+                            text = "★ Importante",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
+
+                    TaskPriority.URGENTE -> {
+                        Text(
+                            text = "⚠ Urgente",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 }
             }
         }

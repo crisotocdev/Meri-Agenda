@@ -1,5 +1,7 @@
 package com.cris.meriagenda.ui.screens
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,26 +13,34 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.cris.meriagenda.data.model.Task
 import com.cris.meriagenda.data.model.TaskCategory
 import com.cris.meriagenda.data.model.TaskPriority
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun AddTaskScreen(
     onBack: () -> Unit,
     onSave: (Task) -> Unit
 ) {
+
+    val context = LocalContext.current
 
     var title by rememberSaveable {
         mutableStateOf("")
@@ -43,6 +53,17 @@ fun AddTaskScreen(
     var priority by rememberSaveable {
         mutableStateOf(TaskPriority.NORMAL)
     }
+
+    var dueDate by remember {
+        mutableStateOf(LocalDate.now())
+    }
+
+    var dueTime by remember {
+        mutableStateOf<LocalTime?>(null)
+    }
+
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
     Column(
         modifier = Modifier
@@ -57,7 +78,7 @@ fun AddTaskScreen(
         }
 
         Spacer(
-            modifier = Modifier.height(10.dp)
+            modifier = Modifier.height(8.dp)
         )
 
         Text(
@@ -86,12 +107,11 @@ fun AddTaskScreen(
             },
             placeholder = {
                 Text("Ej: Preparar ficha de Matemática")
-            },
-            singleLine = false
+            }
         )
 
         Spacer(
-            modifier = Modifier.height(24.dp)
+            modifier = Modifier.height(22.dp)
         )
 
         Text(
@@ -129,7 +149,104 @@ fun AddTaskScreen(
         }
 
         Spacer(
-            modifier = Modifier.height(24.dp)
+            modifier = Modifier.height(22.dp)
+        )
+
+        Text(
+            text = "Fecha",
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+
+        OutlinedButton(
+            onClick = {
+
+                DatePickerDialog(
+                    context,
+                    { _, year, month, day ->
+
+                        dueDate = LocalDate.of(
+                            year,
+                            month + 1,
+                            day
+                        )
+                    },
+                    dueDate.year,
+                    dueDate.monthValue - 1,
+                    dueDate.dayOfMonth
+                ).show()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Text(
+                text = if (dueDate == LocalDate.now()) {
+                    "Hoy - ${dueDate.format(dateFormatter)}"
+                } else {
+                    dueDate.format(dateFormatter)
+                }
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+        Text(
+            text = "Hora",
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+
+        OutlinedButton(
+            onClick = {
+
+                val initialTime =
+                    dueTime ?: LocalTime.now()
+
+                TimePickerDialog(
+                    context,
+                    { _, hour, minute ->
+
+                        dueTime = LocalTime.of(
+                            hour,
+                            minute
+                        )
+                    },
+                    initialTime.hour,
+                    initialTime.minute,
+                    true
+                ).show()
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Text(
+                text = dueTime?.format(timeFormatter)
+                    ?: "Sin hora específica"
+            )
+        }
+
+        if (dueTime != null) {
+
+            TextButton(
+                onClick = {
+                    dueTime = null
+                }
+            ) {
+
+                Text("Quitar hora")
+            }
+        }
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
         )
 
         Text(
@@ -177,7 +294,7 @@ fun AddTaskScreen(
         )
 
         Spacer(
-            modifier = Modifier.height(30.dp)
+            modifier = Modifier.height(24.dp)
         )
 
         Button(
@@ -186,11 +303,12 @@ fun AddTaskScreen(
                 val newTask = Task(
                     title = title.trim(),
                     category = category,
+                    dueDate = dueDate,
+                    dueTime = dueTime,
                     priority = priority
                 )
 
                 onSave(newTask)
-
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = title.isNotBlank()

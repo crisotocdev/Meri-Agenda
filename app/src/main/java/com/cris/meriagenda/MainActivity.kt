@@ -16,6 +16,8 @@ import com.cris.meriagenda.data.model.TaskPriority
 import com.cris.meriagenda.ui.screens.AddTaskScreen
 import com.cris.meriagenda.ui.screens.TodayScreen
 import com.cris.meriagenda.ui.theme.MeriAgendaTheme
+import java.time.LocalDate
+import java.time.LocalTime
 
 class MainActivity : ComponentActivity() {
 
@@ -37,19 +39,25 @@ class MainActivity : ComponentActivity() {
                     mutableStateListOf(
                         Task(
                             title = "Preparar ficha de Matemática",
-                            category = TaskCategory.COLEGIO
+                            category = TaskCategory.COLEGIO,
+                            dueDate = LocalDate.now()
                         ),
                         Task(
                             title = "Revisar cuadernos",
-                            category = TaskCategory.COLEGIO
+                            category = TaskCategory.COLEGIO,
+                            dueDate = LocalDate.now(),
+                            dueTime = LocalTime.of(15, 30)
                         ),
                         Task(
                             title = "Leer material para la clase",
-                            category = TaskCategory.UNIVERSIDAD
+                            category = TaskCategory.UNIVERSIDAD,
+                            dueDate = LocalDate.now()
                         ),
                         Task(
                             title = "Entregar avance de investigación",
                             category = TaskCategory.UNIVERSIDAD,
+                            dueDate = LocalDate.now(),
+                            dueTime = LocalTime.of(23, 59),
                             priority = TaskPriority.IMPORTANTE
                         )
                     )
@@ -60,7 +68,9 @@ class MainActivity : ComponentActivity() {
                     "today" -> {
 
                         TodayScreen(
-                            tasks = tasks,
+                            tasks = tasks.filter {
+                                it.dueDate == LocalDate.now()
+                            },
                             onAddTaskClick = {
                                 currentScreen = "add"
                             },
