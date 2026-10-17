@@ -1,5 +1,7 @@
 package com.cris.meriagenda.data.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -14,12 +16,21 @@ enum class TaskPriority {
     URGENTE
 }
 
+@Entity(tableName = "tasks")
 data class Task(
-    val id: Long = System.currentTimeMillis(),
+
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+
     val title: String,
+
     val category: TaskCategory,
+
     val dueDate: LocalDate,
+
     val dueTime: LocalTime? = null,
+
     val priority: TaskPriority = TaskPriority.NORMAL,
+
     val isCompleted: Boolean = false
 )

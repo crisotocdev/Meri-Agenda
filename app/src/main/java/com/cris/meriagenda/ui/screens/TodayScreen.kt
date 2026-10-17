@@ -92,6 +92,9 @@ fun TodayScreen(
 
                 items(
                     items = tasks,
+                    key = { task ->
+                        task.id
+                    }
                 ) { task ->
 
                     TaskCard(
