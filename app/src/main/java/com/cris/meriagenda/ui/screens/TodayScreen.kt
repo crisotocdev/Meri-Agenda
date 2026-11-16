@@ -16,6 +16,7 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import java.time.format.DateTimeFormatter
 fun TodayScreen(
     tasks: List<Task>,
     onAddTaskClick: () -> Unit,
+    onViewTasksClick: () -> Unit,
     onTaskChecked: (Task, Boolean) -> Unit
 ) {
 
@@ -58,7 +60,7 @@ fun TodayScreen(
                 )
 
                 Text(
-                    text = "Buenos días, Meri 🌷",
+                    text = "MERI AGENDA - CODIGO NUEVO 2026🌷",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -77,6 +79,12 @@ fun TodayScreen(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
+
+                TextButton(
+                    onClick = onViewTasksClick
+                ) {
+                    Text("Ver todas las tareas →")
+                }
             }
 
             if (tasks.isEmpty()) {
@@ -121,7 +129,8 @@ fun TodayScreen(
 @Composable
 fun TaskCard(
     task: Task,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    onDeleteClick: (() -> Unit)? = null
 ) {
 
     val timeFormatter =
@@ -144,7 +153,9 @@ fun TaskCard(
             )
 
             Column(
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 8.dp)
             ) {
 
                 Text(
@@ -190,6 +201,15 @@ fun TaskCard(
                             style = MaterialTheme.typography.labelMedium
                         )
                     }
+                }
+            }
+
+            if (onDeleteClick != null) {
+
+                TextButton(
+                    onClick = onDeleteClick
+                ) {
+                    Text("Eliminar")
                 }
             }
         }

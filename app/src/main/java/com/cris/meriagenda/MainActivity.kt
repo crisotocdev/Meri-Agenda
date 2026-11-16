@@ -12,6 +12,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import com.cris.meriagenda.data.local.TaskDatabase
 import com.cris.meriagenda.ui.screens.AddTaskScreen
+import com.cris.meriagenda.ui.screens.TasksScreen
 import com.cris.meriagenda.ui.screens.TodayScreen
 import com.cris.meriagenda.ui.theme.MeriAgendaTheme
 import kotlinx.coroutines.launch
@@ -58,6 +59,10 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = "add"
                             },
 
+                            onViewTasksClick = {
+                                currentScreen = "tasks"
+                            },
+
                             onTaskChecked = { task, checked ->
 
                                 coroutineScope.launch {
@@ -74,6 +79,45 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    "tasks" -> {
+
+                        TasksScreen(
+                            tasks = tasks,
+
+                            onBack = {
+                                currentScreen = "today"
+                            },
+
+                            onAddTaskClick = {
+                                currentScreen = "add"
+                            },
+
+                            onTaskChecked = { task, checked ->
+
+                                coroutineScope.launch {
+
+                                    database
+                                        .taskDao()
+                                        .updateTask(
+                                            task.copy(
+                                                isCompleted = checked
+                                            )
+                                        )
+                                }
+                            },
+
+                            onDeleteTask = { task ->
+
+                                coroutineScope.launch {
+
+                                    database
+                                        .taskDao()
+                                        .deleteTask(task)
+                                }
+                            }
+                        )
+                    }
+
                     "add" -> {
 
                         AddTaskScreen(
@@ -84,14 +128,13 @@ class MainActivity : ComponentActivity() {
                             onSave = { task ->
 
                                 coroutineScope.launch {
+
                                     database
                                         .taskDao()
                                         .insertTask(task)
 
                                     currentScreen = "today"
                                 }
-
-
                             }
                         )
                     }
