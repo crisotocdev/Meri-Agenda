@@ -41,6 +41,7 @@ fun TasksScreen(
     onBack: () -> Unit,
     onAddTaskClick: () -> Unit,
     onTaskChecked: (Task, Boolean) -> Unit,
+    onEditTask: (Task) -> Unit,
     onDeleteTask: (Task) -> Unit
 ) {
 
@@ -204,6 +205,10 @@ fun TasksScreen(
                                         task,
                                         checked
                                     )
+                                },
+
+                                onEditClick = {
+                                    onEditTask(task)
                                 },
 
                                 onDeleteClick = {

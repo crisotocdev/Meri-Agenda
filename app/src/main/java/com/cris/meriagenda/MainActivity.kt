@@ -17,6 +17,8 @@ import com.cris.meriagenda.ui.screens.TodayScreen
 import com.cris.meriagenda.ui.theme.MeriAgendaTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import androidx.compose.material3.Text
+import com.cris.meriagenda.ui.screens.EditTaskScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -46,7 +48,48 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("today")
                 }
 
+                var editingTaskId by rememberSaveable {
+                    mutableStateOf<Long?>(null)
+                }
+
                 when (currentScreen) {
+
+                    "edit" -> {
+
+                        val taskToEdit =
+                            tasks.firstOrNull {
+                                it.id == editingTaskId
+                            }
+
+                        if (taskToEdit != null) {
+
+                            EditTaskScreen(
+                                task = taskToEdit,
+
+                                onBack = {
+                                    editingTaskId = null
+                                    currentScreen = "tasks"
+                                },
+
+                                onSave = { updatedTask ->
+
+                                    coroutineScope.launch {
+
+                                        database
+                                            .taskDao()
+                                            .updateTask(updatedTask)
+
+                                        editingTaskId = null
+                                        currentScreen = "tasks"
+                                    }
+                                }
+                            )
+
+                        } else {
+
+                            Text("Cargando tarea...")
+                        }
+                    }
 
                     "today" -> {
 
@@ -104,6 +147,12 @@ class MainActivity : ComponentActivity() {
                                             )
                                         )
                                 }
+                            },
+
+                            onEditTask = { task ->
+
+                                editingTaskId = task.id
+                                currentScreen = "edit"
                             },
 
                             onDeleteTask = { task ->

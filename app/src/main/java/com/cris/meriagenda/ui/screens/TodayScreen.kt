@@ -130,6 +130,7 @@ fun TodayScreen(
 fun TaskCard(
     task: Task,
     onCheckedChange: (Boolean) -> Unit,
+    onEditClick: (() -> Unit)? = null,
     onDeleteClick: (() -> Unit)? = null
 ) {
 
@@ -204,12 +205,26 @@ fun TaskCard(
                 }
             }
 
-            if (onDeleteClick != null) {
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
 
-                TextButton(
-                    onClick = onDeleteClick
-                ) {
-                    Text("Eliminar")
+                if (onEditClick != null) {
+
+                    TextButton(
+                        onClick = onEditClick
+                    ) {
+                        Text("Editar")
+                    }
+                }
+
+                if (onDeleteClick != null) {
+
+                    TextButton(
+                        onClick = onDeleteClick
+                    ) {
+                        Text("Eliminar")
+                    }
                 }
             }
         }
