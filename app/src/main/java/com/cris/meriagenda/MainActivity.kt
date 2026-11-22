@@ -270,11 +270,17 @@ class MainActivity : ComponentActivity() {
                                                 .taskDao()
                                                 .updateTask(
                                                     task.copy(
-                                                        isCompleted =
-                                                            checked
+                                                        isCompleted = checked
                                                     )
                                                 )
                                         }
+                                    },
+
+                                    onAddTaskClick = { selectedDate ->
+
+                                        navController.navigate(
+                                            "add?date=$selectedDate"
+                                        )
                                     }
                                 )
                             }
@@ -284,9 +290,39 @@ class MainActivity : ComponentActivity() {
                                 SettingsScreen()
                             }
 
-                            composable("add") {
+                            composable(
+                                route = "add?date={date}",
+
+                                arguments = listOf(
+                                    navArgument("date") {
+                                        type = NavType.StringType
+                                        defaultValue = ""
+                                    }
+                                )
+                            ) { entry ->
+
+                                val dateText =
+                                    entry.arguments
+                                        ?.getString("date")
+                                        .orEmpty()
+
+                                val initialDate =
+                                    try {
+
+                                        if (dateText.isNotBlank()) {
+                                            LocalDate.parse(dateText)
+                                        } else {
+                                            LocalDate.now()
+                                        }
+
+                                    } catch (_: Exception) {
+
+                                        LocalDate.now()
+                                    }
 
                                 AddTaskScreen(
+                                    initialDate = initialDate,
+
                                     onBack = {
 
                                         navController

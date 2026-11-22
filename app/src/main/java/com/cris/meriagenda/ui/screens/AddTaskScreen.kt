@@ -36,6 +36,7 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun AddTaskScreen(
+    initialDate: LocalDate = LocalDate.now(),
     onBack: () -> Unit,
     onSave: (Task) -> Unit
 ) {
@@ -54,8 +55,8 @@ fun AddTaskScreen(
         mutableStateOf(TaskPriority.NORMAL)
     }
 
-    var dueDate by remember {
-        mutableStateOf(LocalDate.now())
+    var dueDate by remember(initialDate) {
+        mutableStateOf(initialDate)
     }
 
     var dueTime by remember {

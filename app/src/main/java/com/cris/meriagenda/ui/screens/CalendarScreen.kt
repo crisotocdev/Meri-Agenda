@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,7 +41,8 @@ import java.util.Locale
 @Composable
 fun CalendarScreen(
     tasks: List<Task>,
-    onTaskChecked: (Task, Boolean) -> Unit
+    onTaskChecked: (Task, Boolean) -> Unit,
+    onAddTaskClick: (LocalDate) -> Unit
 ) {
 
     val today = LocalDate.now()
@@ -251,6 +253,19 @@ fun CalendarScreen(
 
         Spacer(
             modifier = Modifier.height(8.dp)
+        )
+
+        Button(
+            onClick = {
+                onAddTaskClick(selectedDate)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("+ Nueva tarea para esta fecha")
+        }
+
+        Spacer(
+            modifier = Modifier.height(12.dp)
         )
 
         if (selectedDateTasks.isEmpty()) {
