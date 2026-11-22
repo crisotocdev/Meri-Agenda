@@ -49,11 +49,15 @@ fun TasksScreen(
         mutableStateOf(TaskFilter.TODAS)
     }
 
+    var showCompleted by remember {
+        mutableStateOf(false)
+    }
+
     var taskToDelete by remember {
         mutableStateOf<Task?>(null)
     }
 
-    val filteredTasks = when (selectedFilter) {
+    val categoryFilteredTasks = when (selectedFilter) {
 
         TaskFilter.TODAS ->
             tasks
@@ -67,6 +71,17 @@ fun TasksScreen(
             tasks.filter {
                 it.category == TaskCategory.UNIVERSIDAD
             }
+    }
+
+    val filteredTasks = if (showCompleted) {
+
+        categoryFilteredTasks
+
+    } else {
+
+        categoryFilteredTasks.filter {
+            !it.isCompleted
+        }
     }
 
     val groupedTasks = filteredTasks
@@ -157,6 +172,26 @@ fun TasksScreen(
             }
 
             Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            FilterChip(
+                selected = showCompleted,
+                onClick = {
+                    showCompleted = !showCompleted
+                },
+                label = {
+                    Text(
+                        text = if (showCompleted) {
+                            "✓ Ocultar completadas"
+                        } else {
+                            "✓ Mostrar completadas"
+                        }
+                    )
+                }
+            )
+
+            Spacer(
                 modifier = Modifier.height(12.dp)
             )
 
@@ -224,6 +259,25 @@ fun TasksScreen(
                         )
                     }
                 }
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                FilterChip(
+                    selected = showCompleted,
+                    onClick = {
+                        showCompleted = !showCompleted
+                    },
+                    label = {
+                        Text(
+                            if (showCompleted) {
+                                "✓ Ocultar completadas"
+                            } else {
+                                "✓ Mostrar completadas"
+                            }
+                        )
+                    }
+                )
             }
         }
     }
