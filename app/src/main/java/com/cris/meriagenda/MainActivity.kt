@@ -30,6 +30,7 @@ import com.cris.meriagenda.ui.screens.TodayScreen
 import com.cris.meriagenda.ui.theme.MeriAgendaTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import com.cris.meriagenda.notifications.NotificationHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -39,6 +40,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        NotificationHelper.createNotificationChannel(this)
 
         enableEdgeToEdge()
 
