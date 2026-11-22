@@ -4,21 +4,32 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.cris.meriagenda.data.local.TaskDatabase
 import com.cris.meriagenda.ui.screens.AddTaskScreen
+import com.cris.meriagenda.ui.screens.CalendarScreen
+import com.cris.meriagenda.ui.screens.EditTaskScreen
+import com.cris.meriagenda.ui.screens.SettingsScreen
 import com.cris.meriagenda.ui.screens.TasksScreen
 import com.cris.meriagenda.ui.screens.TodayScreen
 import com.cris.meriagenda.ui.theme.MeriAgendaTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import androidx.compose.material3.Text
-import com.cris.meriagenda.ui.screens.EditTaskScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -44,148 +55,296 @@ class MainActivity : ComponentActivity() {
                         initial = emptyList()
                     )
 
-                var currentScreen by rememberSaveable {
-                    mutableStateOf("today")
-                }
+                val navController =
+                    rememberNavController()
 
-                var editingTaskId by rememberSaveable {
-                    mutableStateOf<Long?>(null)
-                }
+                val backStackEntry by
+                navController.currentBackStackEntryAsState()
 
-                when (currentScreen) {
+                val currentRoute =
+                    backStackEntry?.destination?.route
 
-                    "edit" -> {
+                val mainRoutes = setOf(
+                    "today",
+                    "tasks",
+                    "calendar",
+                    "settings"
+                )
 
-                        val taskToEdit =
-                            tasks.firstOrNull {
-                                it.id == editingTaskId
-                            }
+                Scaffold(
+                    bottomBar = {
 
-                        if (taskToEdit != null) {
+                        if (currentRoute in mainRoutes) {
 
-                            EditTaskScreen(
-                                task = taskToEdit,
+                            NavigationBar {
 
-                                onBack = {
-                                    editingTaskId = null
-                                    currentScreen = "tasks"
-                                },
+                                val destinations = listOf(
+                                    Triple(
+                                        "today",
+                                        "Hoy",
+                                        "🏠"
+                                    ),
+                                    Triple(
+                                        "tasks",
+                                        "Tareas",
+                                        "📋"
+                                    ),
+                                    Triple(
+                                        "calendar",
+                                        "Calendario",
+                                        "📅"
+                                    ),
+                                    Triple(
+                                        "settings",
+                                        "Ajustes",
+                                        "⚙️"
+                                    )
+                                )
 
-                                onSave = { updatedTask ->
+                                destinations.forEach {
+                                        (route, label, icon) ->
 
-                                    coroutineScope.launch {
+                                    NavigationBarItem(
+                                        selected =
+                                            currentRoute == route,
 
-                                        database
-                                            .taskDao()
-                                            .updateTask(updatedTask)
+                                        onClick = {
 
-                                        editingTaskId = null
-                                        currentScreen = "tasks"
-                                    }
+                                            if (
+                                                currentRoute != route
+                                            ) {
+
+                                                navController.navigate(
+                                                    route
+                                                ) {
+
+                                                    popUpTo("today") {
+                                                        saveState = true
+                                                    }
+
+                                                    launchSingleTop = true
+                                                    restoreState = true
+                                                }
+                                            }
+                                        },
+
+                                        icon = {
+                                            Text(icon)
+                                        },
+
+                                        label = {
+                                            Text(label)
+                                        }
+                                    )
                                 }
-                            )
-
-                        } else {
-
-                            Text("Cargando tarea...")
+                            }
                         }
                     }
+                ) { innerPadding ->
 
-                    "today" -> {
+                    Box(
+                        modifier = Modifier.padding(
+                            innerPadding
+                        )
+                    ) {
 
-                        TodayScreen(
-                            tasks = tasks.filter {
-                                it.dueDate == LocalDate.now()
-                            },
+                        NavHost(
+                            navController = navController,
+                            startDestination = "today"
+                        ) {
 
-                            onAddTaskClick = {
-                                currentScreen = "add"
-                            },
+                            composable("today") {
 
-                            onViewTasksClick = {
-                                currentScreen = "tasks"
-                            },
+                                TodayScreen(
+                                    tasks = tasks.filter {
+                                        it.dueDate ==
+                                                LocalDate.now()
+                                    },
 
-                            onTaskChecked = { task, checked ->
-
-                                coroutineScope.launch {
-
-                                    database
-                                        .taskDao()
-                                        .updateTask(
-                                            task.copy(
-                                                isCompleted = checked
-                                            )
+                                    onAddTaskClick = {
+                                        navController.navigate(
+                                            "add"
                                         )
-                                }
+                                    },
+
+                                    onViewTasksClick = {
+                                        navController.navigate(
+                                            "tasks"
+                                        ) {
+                                            launchSingleTop = true
+                                        }
+                                    },
+
+                                    onTaskChecked = {
+                                            task,
+                                            checked ->
+
+                                        coroutineScope.launch {
+
+                                            database
+                                                .taskDao()
+                                                .updateTask(
+                                                    task.copy(
+                                                        isCompleted =
+                                                            checked
+                                                    )
+                                                )
+                                        }
+                                    }
+                                )
                             }
-                        )
-                    }
 
-                    "tasks" -> {
+                            composable("tasks") {
 
-                        TasksScreen(
-                            tasks = tasks,
+                                TasksScreen(
+                                    tasks = tasks,
 
-                            onBack = {
-                                currentScreen = "today"
-                            },
+                                    onBack = {
 
-                            onAddTaskClick = {
-                                currentScreen = "add"
-                            },
+                                        if (
+                                            !navController
+                                                .popBackStack()
+                                        ) {
 
-                            onTaskChecked = { task, checked ->
-
-                                coroutineScope.launch {
-
-                                    database
-                                        .taskDao()
-                                        .updateTask(
-                                            task.copy(
-                                                isCompleted = checked
+                                            navController.navigate(
+                                                "today"
                                             )
+                                        }
+                                    },
+
+                                    onAddTaskClick = {
+
+                                        navController.navigate(
+                                            "add"
                                         )
-                                }
-                            },
+                                    },
 
-                            onEditTask = { task ->
+                                    onTaskChecked = {
+                                            task,
+                                            checked ->
 
-                                editingTaskId = task.id
-                                currentScreen = "edit"
-                            },
+                                        coroutineScope.launch {
 
-                            onDeleteTask = { task ->
+                                            database
+                                                .taskDao()
+                                                .updateTask(
+                                                    task.copy(
+                                                        isCompleted =
+                                                            checked
+                                                    )
+                                                )
+                                        }
+                                    },
 
-                                coroutineScope.launch {
+                                    onEditTask = { task ->
 
-                                    database
-                                        .taskDao()
-                                        .deleteTask(task)
+                                        navController.navigate(
+                                            "edit/${task.id}"
+                                        )
+                                    },
+
+                                    onDeleteTask = { task ->
+
+                                        coroutineScope.launch {
+
+                                            database
+                                                .taskDao()
+                                                .deleteTask(task)
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable("calendar") {
+
+                                CalendarScreen()
+                            }
+
+                            composable("settings") {
+
+                                SettingsScreen()
+                            }
+
+                            composable("add") {
+
+                                AddTaskScreen(
+                                    onBack = {
+
+                                        navController
+                                            .popBackStack()
+                                    },
+
+                                    onSave = { task ->
+
+                                        coroutineScope.launch {
+
+                                            database
+                                                .taskDao()
+                                                .insertTask(task)
+
+                                            navController
+                                                .popBackStack()
+                                        }
+                                    }
+                                )
+                            }
+
+                            composable(
+                                route = "edit/{taskId}",
+
+                                arguments = listOf(
+                                    navArgument("taskId") {
+                                        type =
+                                            NavType.LongType
+                                    }
+                                )
+                            ) { entry ->
+
+                                val taskId =
+                                    entry.arguments
+                                        ?.getLong("taskId")
+
+                                val taskToEdit =
+                                    tasks.firstOrNull {
+                                        it.id == taskId
+                                    }
+
+                                if (taskToEdit != null) {
+
+                                    EditTaskScreen(
+                                        task = taskToEdit,
+
+                                        onBack = {
+
+                                            navController
+                                                .popBackStack()
+                                        },
+
+                                        onSave = {
+                                                updatedTask ->
+
+                                            coroutineScope.launch {
+
+                                                database
+                                                    .taskDao()
+                                                    .updateTask(
+                                                        updatedTask
+                                                    )
+
+                                                navController
+                                                    .popBackStack()
+                                            }
+                                        }
+                                    )
+
+                                } else {
+
+                                    Text(
+                                        "Cargando tarea..."
+                                    )
                                 }
                             }
-                        )
-                    }
-
-                    "add" -> {
-
-                        AddTaskScreen(
-                            onBack = {
-                                currentScreen = "today"
-                            },
-
-                            onSave = { task ->
-
-                                coroutineScope.launch {
-
-                                    database
-                                        .taskDao()
-                                        .insertTask(task)
-
-                                    currentScreen = "today"
-                                }
-                            }
-                        )
+                        }
                     }
                 }
             }
