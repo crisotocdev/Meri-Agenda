@@ -88,4 +88,75 @@ object NotificationHelper {
                 notification
             )
     }
+
+    fun showTaskReminder(
+        context: Context,
+        taskId: Long,
+        title: String,
+        category: String,
+        priority: String
+    ) {
+
+        if (
+            Build.VERSION.SDK_INT >=
+            Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+
+        val categoryText =
+            when (category) {
+
+                "COLEGIO" ->
+                    "🏫 Colegio"
+
+                "UNIVERSIDAD" ->
+                    "🎓 Universidad"
+
+                else ->
+                    category
+            }
+
+        val priorityText =
+            when (priority) {
+
+                "URGENTE" ->
+                    "⚠ Urgente"
+
+                "IMPORTANTE" ->
+                    "★ Importante"
+
+                else ->
+                    "Normal"
+            }
+
+        val notification =
+            NotificationCompat.Builder(
+                context,
+                CHANNEL_ID
+            )
+                .setSmallIcon(
+                    R.drawable.ic_notification
+                )
+                .setContentTitle(title)
+                .setContentText(
+                    "$categoryText • $priorityText"
+                )
+                .setPriority(
+                    NotificationCompat.PRIORITY_HIGH
+                )
+                .setAutoCancel(true)
+                .build()
+
+        NotificationManagerCompat
+            .from(context)
+            .notify(
+                taskId.hashCode(),
+                notification
+            )
+    }
 }

@@ -1,8 +1,12 @@
 package com.cris.meriagenda.ui.screens
 
 import android.Manifest
+import android.app.AlarmManager
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +39,10 @@ fun SettingsScreen() {
     val context =
         LocalContext.current
 
-    fun checkPermission(): Boolean {
+    /*
+     * PERMISO DE NOTIFICACIONES
+     */
+    fun checkNotificationPermission(): Boolean {
 
         return if (
             Build.VERSION.SDK_INT >=
@@ -55,7 +62,7 @@ fun SettingsScreen() {
 
     var hasNotificationPermission by remember {
         mutableStateOf(
-            checkPermission()
+            checkNotificationPermission()
         )
     }
 
@@ -69,6 +76,47 @@ fun SettingsScreen() {
                 granted
         }
 
+    /*
+     * PERMISO DE ALARMAS EXACTAS
+     */
+    fun checkExactAlarmPermission(): Boolean {
+
+        if (
+            Build.VERSION.SDK_INT <
+            Build.VERSION_CODES.S
+        ) {
+            return true
+        }
+
+        val alarmManager =
+            context.getSystemService(
+                AlarmManager::class.java
+            )
+
+        return alarmManager
+            .canScheduleExactAlarms()
+    }
+
+    var hasExactAlarmPermission by remember {
+        mutableStateOf(
+            checkExactAlarmPermission()
+        )
+    }
+
+    val exactAlarmLauncher =
+        rememberLauncherForActivityResult(
+            contract =
+                ActivityResultContracts
+                    .StartActivityForResult()
+        ) {
+
+            hasExactAlarmPermission =
+                checkExactAlarmPermission()
+        }
+
+    /*
+     * INTERFAZ
+     */
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,7 +130,8 @@ fun SettingsScreen() {
             text = "Ajustes",
             style =
                 MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight =
+                FontWeight.Bold
         )
 
         Text(
@@ -93,14 +142,19 @@ fun SettingsScreen() {
         )
 
         Spacer(
-            modifier = Modifier.height(12.dp)
+            modifier =
+                Modifier.height(12.dp)
         )
 
+        /*
+         * SECCIÓN NOTIFICACIONES
+         */
         Text(
             text = "Notificaciones",
             style =
                 MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight =
+                FontWeight.Bold
         )
 
         Surface(
@@ -198,5 +252,111 @@ fun SettingsScreen() {
                 }
             }
         }
+
+        /*
+         * AQUÍ VA LA NUEVA SECCIÓN
+         * DE ALARMAS EXACTAS
+         */
+        Spacer(
+            modifier =
+                Modifier.height(12.dp)
+        )
+
+        Text(
+            text =
+                "Alarmas y recordatorios",
+            style =
+                MaterialTheme.typography.titleLarge,
+            fontWeight =
+                FontWeight.Bold
+        )
+
+        Surface(
+            modifier =
+                Modifier.fillMaxWidth(),
+
+            shape =
+                MaterialTheme.shapes.medium,
+
+            color =
+                MaterialTheme
+                    .colorScheme
+                    .surfaceVariant
+        ) {
+
+            Column(
+                modifier =
+                    Modifier.padding(16.dp),
+
+                verticalArrangement =
+                    Arrangement.spacedBy(10.dp)
+            ) {
+
+                Text(
+                    text =
+                        if (
+                            hasExactAlarmPermission
+                        ) {
+
+                            "✅ Recordatorios exactos activados"
+
+                        } else {
+
+                            "⏰ Falta permitir alarmas exactas"
+                        },
+
+                    fontWeight =
+                        FontWeight.Bold
+                )
+
+                Text(
+                    text =
+                        "Permite que Meri Agenda avise a la hora exacta de cada tarea."
+                )
+
+                if (
+                    !hasExactAlarmPermission
+                ) {
+
+                    Button(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        onClick = {
+
+                            if (
+                                Build.VERSION.SDK_INT >=
+                                Build.VERSION_CODES.S
+                            ) {
+
+                                val intent =
+                                    Intent(
+                                        Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM
+                                    ).apply {
+
+                                        data =
+                                            Uri.parse(
+                                                "package:${context.packageName}"
+                                            )
+                                    }
+
+                                exactAlarmLauncher
+                                    .launch(intent)
+                            }
+                        }
+                    ) {
+
+                        Text(
+                            "Permitir alarmas y recordatorios"
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(
+            modifier =
+                Modifier.height(30.dp)
+        )
     }
 }

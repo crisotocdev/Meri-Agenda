@@ -21,6 +21,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cris.meriagenda.data.local.TaskDatabase
+import com.cris.meriagenda.notifications.NotificationHelper
+import com.cris.meriagenda.notifications.ReminderScheduler
 import com.cris.meriagenda.ui.screens.AddTaskScreen
 import com.cris.meriagenda.ui.screens.CalendarScreen
 import com.cris.meriagenda.ui.screens.EditTaskScreen
@@ -30,7 +32,6 @@ import com.cris.meriagenda.ui.screens.TodayScreen
 import com.cris.meriagenda.ui.theme.MeriAgendaTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import com.cris.meriagenda.notifications.NotificationHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -49,7 +50,8 @@ class MainActivity : ComponentActivity() {
 
             MeriAgendaTheme {
 
-                val coroutineScope = rememberCoroutineScope()
+                val coroutineScope =
+                    rememberCoroutineScope()
 
                 val tasks by database
                     .taskDao()
@@ -62,72 +64,96 @@ class MainActivity : ComponentActivity() {
                     rememberNavController()
 
                 val backStackEntry by
-                navController.currentBackStackEntryAsState()
+                navController
+                    .currentBackStackEntryAsState()
 
                 val currentRoute =
-                    backStackEntry?.destination?.route
+                    backStackEntry
+                        ?.destination
+                        ?.route
 
-                val mainRoutes = setOf(
-                    "today",
-                    "tasks",
-                    "calendar",
-                    "settings"
-                )
+                val mainRoutes =
+                    setOf(
+                        "today",
+                        "tasks",
+                        "calendar",
+                        "settings"
+                    )
 
                 Scaffold(
                     bottomBar = {
 
-                        if (currentRoute in mainRoutes) {
+                        if (
+                            currentRoute in mainRoutes
+                        ) {
 
                             NavigationBar {
 
-                                val destinations = listOf(
-                                    Triple(
-                                        "today",
-                                        "Hoy",
-                                        "🏠"
-                                    ),
-                                    Triple(
-                                        "tasks",
-                                        "Tareas",
-                                        "📋"
-                                    ),
-                                    Triple(
-                                        "calendar",
-                                        "Calendario",
-                                        "📅"
-                                    ),
-                                    Triple(
-                                        "settings",
-                                        "Ajustes",
-                                        "⚙️"
+                                val destinations =
+                                    listOf(
+
+                                        Triple(
+                                            "today",
+                                            "Hoy",
+                                            "🏠"
+                                        ),
+
+                                        Triple(
+                                            "tasks",
+                                            "Tareas",
+                                            "📋"
+                                        ),
+
+                                        Triple(
+                                            "calendar",
+                                            "Calendario",
+                                            "📅"
+                                        ),
+
+                                        Triple(
+                                            "settings",
+                                            "Ajustes",
+                                            "⚙️"
+                                        )
                                     )
-                                )
 
                                 destinations.forEach {
-                                        (route, label, icon) ->
+                                        (
+                                            route,
+                                            label,
+                                            icon
+                                        ) ->
 
                                     NavigationBarItem(
                                         selected =
-                                            currentRoute == route,
+                                            currentRoute ==
+                                                    route,
 
                                         onClick = {
 
                                             if (
-                                                currentRoute != route
+                                                currentRoute !=
+                                                route
                                             ) {
 
-                                                navController.navigate(
-                                                    route
-                                                ) {
+                                                navController
+                                                    .navigate(
+                                                        route
+                                                    ) {
 
-                                                    popUpTo("today") {
-                                                        saveState = true
+                                                        popUpTo(
+                                                            "today"
+                                                        ) {
+                                                            saveState =
+                                                                true
+                                                        }
+
+                                                        launchSingleTop =
+                                                            true
+
+                                                        restoreState =
+                                                            true
                                                     }
-
-                                                    launchSingleTop = true
-                                                    restoreState = true
-                                                }
                                             }
                                         },
 
@@ -146,36 +172,49 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
 
                     Box(
-                        modifier = Modifier.padding(
-                            innerPadding
-                        )
+                        modifier =
+                            Modifier.padding(
+                                innerPadding
+                            )
                     ) {
 
                         NavHost(
-                            navController = navController,
-                            startDestination = "today"
+                            navController =
+                                navController,
+
+                            startDestination =
+                                "today"
                         ) {
 
+                            /*
+                             * HOY
+                             */
                             composable("today") {
 
                                 TodayScreen(
-                                    tasks = tasks.filter {
-                                        it.dueDate ==
-                                                LocalDate.now()
-                                    },
+                                    tasks =
+                                        tasks.filter {
+                                            it.dueDate ==
+                                                    LocalDate.now()
+                                        },
 
                                     onAddTaskClick = {
-                                        navController.navigate(
-                                            "add"
-                                        )
+
+                                        navController
+                                            .navigate(
+                                                "add"
+                                            )
                                     },
 
                                     onViewTasksClick = {
-                                        navController.navigate(
-                                            "tasks"
-                                        ) {
-                                            launchSingleTop = true
-                                        }
+
+                                        navController
+                                            .navigate(
+                                                "tasks"
+                                            ) {
+                                                launchSingleTop =
+                                                    true
+                                            }
                                     },
 
                                     onTaskChecked = {
@@ -184,19 +223,31 @@ class MainActivity : ComponentActivity() {
 
                                         coroutineScope.launch {
 
+                                            val updatedTask =
+                                                task.copy(
+                                                    isCompleted =
+                                                        checked
+                                                )
+
                                             database
                                                 .taskDao()
                                                 .updateTask(
-                                                    task.copy(
-                                                        isCompleted =
-                                                            checked
-                                                    )
+                                                    updatedTask
+                                                )
+
+                                            ReminderScheduler
+                                                .scheduleReminder(
+                                                    applicationContext,
+                                                    updatedTask
                                                 )
                                         }
                                     }
                                 )
                             }
 
+                            /*
+                             * TODAS LAS TAREAS
+                             */
                             composable("tasks") {
 
                                 TasksScreen(
@@ -209,17 +260,19 @@ class MainActivity : ComponentActivity() {
                                                 .popBackStack()
                                         ) {
 
-                                            navController.navigate(
-                                                "today"
-                                            )
+                                            navController
+                                                .navigate(
+                                                    "today"
+                                                )
                                         }
                                     },
 
                                     onAddTaskClick = {
 
-                                        navController.navigate(
-                                            "add"
-                                        )
+                                        navController
+                                            .navigate(
+                                                "add"
+                                            )
                                     },
 
                                     onTaskChecked = {
@@ -228,36 +281,57 @@ class MainActivity : ComponentActivity() {
 
                                         coroutineScope.launch {
 
+                                            val updatedTask =
+                                                task.copy(
+                                                    isCompleted =
+                                                        checked
+                                                )
+
                                             database
                                                 .taskDao()
                                                 .updateTask(
-                                                    task.copy(
-                                                        isCompleted =
-                                                            checked
-                                                    )
+                                                    updatedTask
+                                                )
+
+                                            ReminderScheduler
+                                                .scheduleReminder(
+                                                    applicationContext,
+                                                    updatedTask
                                                 )
                                         }
                                     },
 
                                     onEditTask = { task ->
 
-                                        navController.navigate(
-                                            "edit/${task.id}"
-                                        )
+                                        navController
+                                            .navigate(
+                                                "edit/${task.id}"
+                                            )
                                     },
 
                                     onDeleteTask = { task ->
 
                                         coroutineScope.launch {
 
+                                            ReminderScheduler
+                                                .cancelReminder(
+                                                    applicationContext,
+                                                    task.id
+                                                )
+
                                             database
                                                 .taskDao()
-                                                .deleteTask(task)
+                                                .deleteTask(
+                                                    task
+                                                )
                                         }
                                     }
                                 )
                             }
 
+                            /*
+                             * CALENDARIO
+                             */
                             composable("calendar") {
 
                                 CalendarScreen(
@@ -269,62 +343,101 @@ class MainActivity : ComponentActivity() {
 
                                         coroutineScope.launch {
 
+                                            val updatedTask =
+                                                task.copy(
+                                                    isCompleted =
+                                                        checked
+                                                )
+
                                             database
                                                 .taskDao()
                                                 .updateTask(
-                                                    task.copy(
-                                                        isCompleted = checked
-                                                    )
+                                                    updatedTask
+                                                )
+
+                                            ReminderScheduler
+                                                .scheduleReminder(
+                                                    applicationContext,
+                                                    updatedTask
                                                 )
                                         }
                                     },
 
-                                    onAddTaskClick = { selectedDate ->
+                                    onAddTaskClick = {
+                                            selectedDate ->
 
-                                        navController.navigate(
-                                            "add?date=$selectedDate"
-                                        )
+                                        navController
+                                            .navigate(
+                                                "add?date=$selectedDate"
+                                            )
                                     }
                                 )
                             }
 
+                            /*
+                             * AJUSTES
+                             */
                             composable("settings") {
 
                                 SettingsScreen()
                             }
 
+                            /*
+                             * CREAR TAREA
+                             */
                             composable(
-                                route = "add?date={date}",
+                                route =
+                                    "add?date={date}",
 
-                                arguments = listOf(
-                                    navArgument("date") {
-                                        type = NavType.StringType
-                                        defaultValue = ""
-                                    }
-                                )
+                                arguments =
+                                    listOf(
+
+                                        navArgument(
+                                            "date"
+                                        ) {
+                                            type =
+                                                NavType.StringType
+
+                                            defaultValue =
+                                                ""
+                                        }
+                                    )
                             ) { entry ->
 
                                 val dateText =
                                     entry.arguments
-                                        ?.getString("date")
+                                        ?.getString(
+                                            "date"
+                                        )
                                         .orEmpty()
 
                                 val initialDate =
                                     try {
 
-                                        if (dateText.isNotBlank()) {
-                                            LocalDate.parse(dateText)
+                                        if (
+                                            dateText
+                                                .isNotBlank()
+                                        ) {
+
+                                            LocalDate.parse(
+                                                dateText
+                                            )
+
                                         } else {
+
                                             LocalDate.now()
                                         }
 
-                                    } catch (_: Exception) {
+                                    } catch (
+                                        _: Exception
+                                    ) {
 
                                         LocalDate.now()
                                     }
 
                                 AddTaskScreen(
-                                    initialDate = initialDate,
+                                    initialDate =
+                                        initialDate,
 
                                     onBack = {
 
@@ -336,9 +449,24 @@ class MainActivity : ComponentActivity() {
 
                                         coroutineScope.launch {
 
-                                            database
-                                                .taskDao()
-                                                .insertTask(task)
+                                            val newTaskId =
+                                                database
+                                                    .taskDao()
+                                                    .insertTask(
+                                                        task
+                                                    )
+
+                                            val savedTask =
+                                                task.copy(
+                                                    id =
+                                                        newTaskId
+                                                )
+
+                                            ReminderScheduler
+                                                .scheduleReminder(
+                                                    applicationContext,
+                                                    savedTask
+                                                )
 
                                             navController
                                                 .popBackStack()
@@ -347,30 +475,44 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
+                            /*
+                             * EDITAR TAREA
+                             */
                             composable(
-                                route = "edit/{taskId}",
+                                route =
+                                    "edit/{taskId}",
 
-                                arguments = listOf(
-                                    navArgument("taskId") {
-                                        type =
-                                            NavType.LongType
-                                    }
-                                )
+                                arguments =
+                                    listOf(
+
+                                        navArgument(
+                                            "taskId"
+                                        ) {
+                                            type =
+                                                NavType.LongType
+                                        }
+                                    )
                             ) { entry ->
 
                                 val taskId =
                                     entry.arguments
-                                        ?.getLong("taskId")
+                                        ?.getLong(
+                                            "taskId"
+                                        )
 
                                 val taskToEdit =
                                     tasks.firstOrNull {
-                                        it.id == taskId
+                                        it.id ==
+                                                taskId
                                     }
 
-                                if (taskToEdit != null) {
+                                if (
+                                    taskToEdit != null
+                                ) {
 
                                     EditTaskScreen(
-                                        task = taskToEdit,
+                                        task =
+                                            taskToEdit,
 
                                         onBack = {
 
@@ -386,6 +528,12 @@ class MainActivity : ComponentActivity() {
                                                 database
                                                     .taskDao()
                                                     .updateTask(
+                                                        updatedTask
+                                                    )
+
+                                                ReminderScheduler
+                                                    .scheduleReminder(
+                                                        applicationContext,
                                                         updatedTask
                                                     )
 
