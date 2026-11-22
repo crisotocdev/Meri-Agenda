@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -137,14 +139,60 @@ fun TaskCard(
     val timeFormatter =
         DateTimeFormatter.ofPattern("HH:mm")
 
+    val cardColor = when (task.priority) {
+
+        TaskPriority.NORMAL ->
+            MaterialTheme.colorScheme.surfaceVariant
+
+        TaskPriority.IMPORTANTE ->
+            MaterialTheme.colorScheme.tertiaryContainer
+
+        TaskPriority.URGENTE ->
+            MaterialTheme.colorScheme.errorContainer
+    }
+
+    val borderColor = when (task.priority) {
+
+        TaskPriority.NORMAL ->
+            MaterialTheme.colorScheme.outlineVariant
+
+        TaskPriority.IMPORTANTE ->
+            MaterialTheme.colorScheme.tertiary
+
+        TaskPriority.URGENTE ->
+            MaterialTheme.colorScheme.error
+    }
+
+    val priorityTextColor = when (task.priority) {
+
+        TaskPriority.NORMAL ->
+            MaterialTheme.colorScheme.onSurfaceVariant
+
+        TaskPriority.IMPORTANTE ->
+            MaterialTheme.colorScheme.onTertiaryContainer
+
+        TaskPriority.URGENTE ->
+            MaterialTheme.colorScheme.error
+    }
+
     Card(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+
+        colors = CardDefaults.cardColors(
+            containerColor = cardColor
+        ),
+
+        border = BorderStroke(
+            width = 2.dp,
+            color = borderColor
+        )
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -185,24 +233,34 @@ fun TaskCard(
                     )
                 }
 
-                when (task.priority) {
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
 
-                    TaskPriority.NORMAL -> Unit
+                Text(
+                    text = when (task.priority) {
 
-                    TaskPriority.IMPORTANTE -> {
-                        Text(
-                            text = "★ Importante",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
+                        TaskPriority.NORMAL ->
+                            "● Normal"
 
-                    TaskPriority.URGENTE -> {
-                        Text(
-                            text = "⚠ Urgente",
-                            style = MaterialTheme.typography.labelMedium
-                        )
-                    }
-                }
+                        TaskPriority.IMPORTANTE ->
+                            "★ Importante"
+
+                        TaskPriority.URGENTE ->
+                            "⚠ Urgente"
+                    },
+
+                    style = MaterialTheme.typography.labelMedium,
+
+                    color = priorityTextColor,
+
+                    fontWeight =
+                        if (task.priority == TaskPriority.NORMAL) {
+                            FontWeight.Normal
+                        } else {
+                            FontWeight.Bold
+                        }
+                )
             }
 
             Column(
