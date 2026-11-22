@@ -257,7 +257,26 @@ class MainActivity : ComponentActivity() {
 
                             composable("calendar") {
 
-                                CalendarScreen()
+                                CalendarScreen(
+                                    tasks = tasks,
+
+                                    onTaskChecked = {
+                                            task,
+                                            checked ->
+
+                                        coroutineScope.launch {
+
+                                            database
+                                                .taskDao()
+                                                .updateTask(
+                                                    task.copy(
+                                                        isCompleted =
+                                                            checked
+                                                    )
+                                                )
+                                        }
+                                    }
+                                )
                             }
 
                             composable("settings") {
